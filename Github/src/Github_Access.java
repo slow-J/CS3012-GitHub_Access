@@ -23,13 +23,15 @@ public class Github_Access
   public static void main(String[] args) throws IOException
   {
     boolean exit = false;
-    GitHubClient client = new GitHubClient();
+    GitHubClient client = new GitHubClient();  
     Scanner scan = new Scanner(System.in);
     while (exit == false)
     {
       exit = true;
-      System.out.print("Enter 1 for username and password or 2 for oath2: ");
-      int logInOpt= scan.nextInt();
+      int logInOpt=0;
+      System.out.print("Enter 1 for username and password or 2 for OAuth2: ");
+      if(scan.hasNext())
+        logInOpt = scan.nextInt();
       if(logInOpt==1)
       {
         client = logInUsername();
@@ -43,15 +45,17 @@ public class Github_Access
         
         System.out.println("Trying authentication for: " + client.getUser());
         UserService userService = new UserService(client);
-        User user = userService.getUser(client.getUser());
-        System.out.println(user.getName());
+        User user =  userService.getUser("internaluser");;
+       // User user = userService.getUser(client.getUser("internaluser"));
+        //System.out.println(user.getName());
       } catch (RequestException re)
       {
         if (re.getMessage().endsWith("Bad credentials (401)"))
         {
+          System.out.println("Bad credentials (401)");
           exit = false;
         }
-      }
+      } 
     }
     scan.close();
     // sample repo print
@@ -96,19 +100,21 @@ public class Github_Access
     username = scan.nextLine();
     System.out.print("Enter password: ");
     pass = scan.nextLine();
-    client.setCredentials(username, pass);
-    scan.close();
+    client.setCredentials(username, pass);    
     return client;
   }
+  //doesnt work
   public static GitHubClient logInOauth2()
   {
     Scanner scan = new Scanner(System.in);
     String authorization = "";
     GitHubClient client = new GitHubClient();
     System.out.print("Enter OAuth2: " );
-    authorization = scan.nextLine();
+    if(scan.hasNext())
+      authorization = scan.nextLine();
     client.setOAuth2Token("SlAV32hkKG");
-    scan.close();
+    UserService service = new UserService(client);
+   
     return client;
   }
   
