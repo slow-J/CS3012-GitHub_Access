@@ -1,5 +1,6 @@
+import java.io.FileWriter;
 import java.io.IOException;
-import java.text.MessageFormat;
+import java.io.Writer;
 import java.util.Collection;
 import java.util.Date;
 import java.util.Scanner;
@@ -12,6 +13,9 @@ import org.eclipse.egit.github.core.client.RequestException;
 import org.eclipse.egit.github.core.service.CommitService;
 import org.eclipse.egit.github.core.service.RepositoryService;
 import org.eclipse.egit.github.core.service.UserService;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 /**
  * @author Jakub
@@ -28,24 +32,15 @@ public class Github_Access
     while (exit == false)
     {
       exit = true;
-      int logInOpt=0;
-      System.out.print("Enter 1 for username and password or 2 for OAuth2: ");
-      if(scan.hasNext())
-        logInOpt = scan.nextInt();
-      if(logInOpt==1)
-      {
-        client = logInUsername();
-      }
-      else if(logInOpt==2)
-      {
-        client = logInOauth2();
-      }        
+      client = logInUsername();
+          
       try
       {
         
         System.out.println("Trying authentication for: " + client.getUser());
         UserService userService = new UserService(client);
-        User user =  userService.getUser("internaluser");;
+        @SuppressWarnings("unused")
+        User user =  userService.getUser("internaluser");
        // User user = userService.getUser(client.getUser("internaluser"));
         //System.out.println(user.getName());
       } catch (RequestException re)
@@ -58,19 +53,16 @@ public class Github_Access
       } 
     }
     scan.close();
-    // sample repo print
     RepositoryService service = new RepositoryService();
+    String totalStr="{";
     try
     {
       final int size = 25;
       for (Repository repo : service.getRepositories(client.getUser()))
       {
-        
-
-        System.out.println(repo.getName() + " Watchers: " + repo.getWatchers());
+        totalStr += "reponame: \""+repo.getName()+"\"{";
         CommitService commitService = new CommitService(client);
-        final String message = "   {0} by {1} on {2}";
-       
+        //final String message = "   {0} by {1} on {2}";
         int pages = 1;
         for (Collection<RepositoryCommit> commits : commitService.pageCommits(repo, size))
         {
@@ -80,7 +72,10 @@ public class Github_Access
             String sha = commit.getSha().substring(0, 7);
             String author = commit.getCommit().getAuthor().getName();
             Date date = commit.getCommit().getAuthor().getDate();
-            System.out.println(MessageFormat.format(message, sha, author, date));
+            //System.out.println(MessageFormat.format(message, sha, author, date));
+            totalStr += "sha: \"" + sha +"\", author: \"" + author + "\", date: \"" + date + "\"}";
+            //MessageFormat.format(message, sha, author, date);            
+            System.out.println(totalStr +"}");
           }
         }
       }
@@ -88,7 +83,12 @@ public class Github_Access
     {
       e.printStackTrace();
     }
- 
+    totalStr+="}";
+    System.out.println(totalStr);
+    Writer writer = new FileWriter("Output.json");
+    Gson gson = new GsonBuilder().create();
+    gson.toJson(totalStr, writer);
+    writer.close();
   }
   public static GitHubClient logInUsername()
   {
@@ -100,10 +100,11 @@ public class Github_Access
     username = scan.nextLine();
     System.out.print("Enter password: ");
     pass = scan.nextLine();
-    client.setCredentials(username, pass);    
+    client.setCredentials(username, pass); 
+    scan.close();
     return client;
   }
-  //doesnt work
+  /*doesnt work
   public static GitHubClient logInOauth2()
   {
     Scanner scan = new Scanner(System.in);
@@ -112,11 +113,12 @@ public class Github_Access
     System.out.print("Enter OAuth2: " );
     if(scan.hasNext())
       authorization = scan.nextLine();
-    client.setOAuth2Token("SlAV32hkKG");
+    client.setOAuth2Token(authorization);
     UserService service = new UserService(client);
    
     return client;
   }
+  */
   
   
 }
