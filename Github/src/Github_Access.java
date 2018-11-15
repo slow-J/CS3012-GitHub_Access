@@ -60,24 +60,23 @@ public class Github_Access
       final int size = 25;
       for (Repository repo : service.getRepositories(client.getUser()))
       {
-        totalStr += "reponame: \""+repo.getName()+"\"{";
+        char quote = '"';
+        totalStr += "reponame: " + quote +repo.getName()+quote + "[";
         CommitService commitService = new CommitService(client);
-        //final String message = "   {0} by {1} on {2}";
         int pages = 1;
         for (Collection<RepositoryCommit> commits : commitService.pageCommits(repo, size))
         {
-          System.out.println("Commit Page " + pages++);
           for (RepositoryCommit commit : commits)
           {
             String sha = commit.getSha().substring(0, 7);
             String author = commit.getCommit().getAuthor().getName();
             Date date = commit.getCommit().getAuthor().getDate();
-            //System.out.println(MessageFormat.format(message, sha, author, date));
-            totalStr += "sha: \"" + sha +"\", author: \"" + author + "\", date: \"" + date + "\"}";
+            totalStr += quote +"sha"+quote+": "+ quote + sha +quote +", "+quote+"author"+quote+": "
+            + quote + author + quote +", "+quote+"date"+quote+": " + date + quote + "}";
             //MessageFormat.format(message, sha, author, date);            
-            System.out.println(totalStr +"}");
           }
         }
+        totalStr +="]";
       }
     } catch (IOException e)
     {
@@ -89,6 +88,7 @@ public class Github_Access
     Gson gson = new GsonBuilder().create();
     gson.toJson(totalStr, writer);
     writer.close();
+    System.out.println("JSON made");
   }
   public static GitHubClient logInUsername()
   {
@@ -103,22 +103,6 @@ public class Github_Access
     client.setCredentials(username, pass); 
     scan.close();
     return client;
-  }
-  /*doesnt work
-  public static GitHubClient logInOauth2()
-  {
-    Scanner scan = new Scanner(System.in);
-    String authorization = "";
-    GitHubClient client = new GitHubClient();
-    System.out.print("Enter OAuth2: " );
-    if(scan.hasNext())
-      authorization = scan.nextLine();
-    client.setOAuth2Token(authorization);
-    UserService service = new UserService(client);
-   
-    return client;
-  }
-  */
-  
+  }  
   
 }
