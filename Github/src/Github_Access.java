@@ -67,22 +67,21 @@ public class Github_Access
         CommitService commitService = new CommitService(client);
         for (Collection<RepositoryCommit> commits : commitService.pageCommits(repo, size))
         {
-          int comC = 0;
           json3 = Json.createObjectBuilder();
           for (RepositoryCommit commit : commits)
           {
-            comC++;
             json3.add("sha", commit.getSha().substring(0, 7));
             json3.add("author",  commit.getCommit().getAuthor().getName());
             json3.add("date", ""+ commit.getCommit().getAuthor().getDate());
-            json2.add("Commit nr "+comC, json3.build());  
+            json2.add("commit", json3.build());  
           }         
           
         }
-        json1.add(repo.getName(), json2.build());
+        json1.add("name", repo.getName());
+        json1.add("commits", json2.build());
         
       }
-      json.add("Repos", json1.build());
+      json.add("repos", json1.build());
     } catch (IOException e)
     {
       System.out.println("Error");
