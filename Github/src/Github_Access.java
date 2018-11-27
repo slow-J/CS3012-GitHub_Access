@@ -2,9 +2,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Scanner;
 
+import javax.json.Json;
+import javax.json.JsonObjectBuilder;
 import org.eclipse.egit.github.core.Repository;
 import org.eclipse.egit.github.core.RepositoryCommit;
 import org.eclipse.egit.github.core.User;
@@ -14,8 +15,7 @@ import org.eclipse.egit.github.core.service.CommitService;
 import org.eclipse.egit.github.core.service.RepositoryService;
 import org.eclipse.egit.github.core.service.UserService;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+
 
 /**
  * @author Jakub
@@ -41,8 +41,7 @@ public class Github_Access
         UserService userService = new UserService(client);
         @SuppressWarnings("unused")
         User user =  userService.getUser("internaluser");
-       // User user = userService.getUser(client.getUser("internaluser"));
-        //System.out.println(user.getName());
+       
       } catch (RequestException re)
       {
         if (re.getMessage().endsWith("Bad credentials (401)"))
@@ -53,40 +52,46 @@ public class Github_Access
       } 
     }
     scan.close();
+    
+    JsonObjectBuilder json = Json.createObjectBuilder();
+    JsonObjectBuilder json1 = Json.createObjectBuilder();
+    JsonObjectBuilder json2;
+    JsonObjectBuilder json3;
     RepositoryService service = new RepositoryService();
-    String totalStr="{";
     try
     {
       final int size = 25;
       for (Repository repo : service.getRepositories(client.getUser()))
       {
-        char quote = '"';
-        totalStr += "reponame: " + quote +repo.getName()+quote + "[";
+        json2 = Json.createObjectBuilder();
         CommitService commitService = new CommitService(client);
-        int pages = 1;
         for (Collection<RepositoryCommit> commits : commitService.pageCommits(repo, size))
         {
+          int comC = 0;
+          json3 = Json.createObjectBuilder();
           for (RepositoryCommit commit : commits)
           {
-            String sha = commit.getSha().substring(0, 7);
-            String author = commit.getCommit().getAuthor().getName();
-            Date date = commit.getCommit().getAuthor().getDate();
-            totalStr += quote +"sha"+quote+": "+ quote + sha +quote +", "+quote+"author"+quote+": "
-            + quote + author + quote +", "+quote+"date"+quote+": " + date + quote + "}";
-            //MessageFormat.format(message, sha, author, date);            
-          }
+            comC++;
+            json3.add("sha", commit.getSha().substring(0, 7));
+            json3.add("author",  commit.getCommit().getAuthor().getName());
+            json3.add("date", ""+ commit.getCommit().getAuthor().getDate());
+            json2.add("Commit nr "+comC, json3.build());  
+          }         
+          
         }
-        totalStr +="]";
+        json1.add(repo.getName(), json2.build());
+        
       }
+      json.add("Repos", json1.build());
     } catch (IOException e)
     {
+      System.out.println("Error");
       e.printStackTrace();
     }
-    totalStr+="}";
-    System.out.println(totalStr);
+   
+    json.toString();
     Writer writer = new FileWriter("Output.json");
-    Gson gson = new GsonBuilder().create();
-    gson.toJson(totalStr, writer);
+    writer.write(json.build().toString());
     writer.close();
     System.out.println("JSON made");
   }
